@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Прототип собаки</title>
+    <script>
+        // конструктор для создания экземпляров
+        function Dog(name, breed, weight) {
+            this.name = name;
+            this.breed = breed;
+            this.weight = weight;
+            // методы будут наследоваться от прототипа, в конструкторе они не нужны
+        }
+
+        // Мы хотим, чтобы прототип содержал свойства species и bark, а также методы run и sleep.
+        // добавляем новые свойства и методы в прототип
+        Dog.prototype.species = 'Canine<br>';
+
+        Dog.prototype.bark = function () {
+            if (this.weight > 25) {
+                document.write(this.name + ' сказал ГАВ!<br>')
+            } else {
+                document.write(this.name + ' сказал тяф.<br>')
+            }
+        };
+
+        Dog.prototype.run = function () {
+            document.write(this.name + ' бежит.<br>')
+        };
+
+        Dog.prototype.sleep = function () {
+            document.write(this.name + ' спит.<br>')
+        };
+
+        Dog.prototype.sitting = false;
+
+        Dog.prototype.sit = function () {
+            if (this.sitting) {
+                document.write(this.name + ' уже сидит.<br>')
+            } else {
+                this.sitting = true;
+                document.write(this.name + ' сел.<br>')
+            }
+        };
+
+        // Создание цепочки прототипов
+
+        // конструктор выставочной собаки
+        function ShowDog(name, breed, weight, handle) {
+            // наследование свойст от базового конструктора
+            // вызывается конструктор Dog, которому передается this, а также значения name, breed и weight как аргументы.
+            Dog.call(this, name, breed, weight);
+            this.handle = handle;
+        }
+        // Теперь, когда у нас имеется конструктор, мы можем задать его свойству prototype новый экземпляр собаки:
+        // Сначала мы вызываем ShowDog с оператором new. Оператор new создает новый пустой объект
+        // и назначает его переменной this в теле ShowDog.
+        ShowDog.prototype = new Dog();
+        // свойство ShowDog.prototype.constructor - определяет конструктор объекта
+        // если не переопределить - покажет исходный конструктор Dog
+        ShowDog.prototype.constructor = ShowDog;
+
+        ShowDog.prototype.league = "Webville<br>";
+
+        ShowDog.prototype.stack = function() {
+            document.write("Stack<br>");
+        };
+
+        ShowDog.prototype.bait = function() {
+            document.write("Bait<br>");
+        };
+
+        ShowDog.prototype.gait = function(kind) {
+            document.write(kind + "ing<br>");
+        };
+
+        ShowDog.prototype.groom = function() {
+            document.write("Groom<br>");
+        };
+
+        let fido = new Dog('Fido', 'Mixed', 38);
+        let fluffy = new Dog('Fluffy', 'Poodle', 30);
+        let spot = new Dog('Spot', 'Chihuahua', 10);
+        // переопределяем метод bark для конкретного экземпляра
+        spot.bark = function() {
+            document.write(this.name + ' тоже сказал ГАВ!<br>');
+        }
+
+        // создание экземпляра выставочной собаки
+        var scotty = new ShowDog("Scotty", "Scottish Terrier", 15, "Cookie");
+
+        fido.bark();
+        fido.run();
+        fido.sleep();
+
+        fluffy.bark();
+        fluffy.run();
+        fluffy.sleep();
+
+        spot.bark();
+        spot.run();
+        spot.sleep();
+        spot.sit();
+        spot.sit();
+
+        scotty.stack();
+        scotty.bark();
+        document.write(scotty.league);
+        document.write(scotty.species);
+
+        /*
+        Метод hasOwnProperty возвращает true, если свойство определяется в экземпляре объекта.
+        Если возвращается false, но вы можете обратиться к этому свойству, значит, свойство определено в прототипе.
+        */
+        spot.hasOwnProperty("species");
+        fido.hasOwnProperty("species");
+
+        document.write(fido.constructor + '<br>');
+        document.write(scotty.constructor + '<br>');
+
+    </script>
+</head>
+<body>
+
+</body>
+</html>
