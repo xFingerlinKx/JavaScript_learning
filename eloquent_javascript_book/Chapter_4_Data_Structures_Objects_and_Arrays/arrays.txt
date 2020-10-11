@@ -1,0 +1,59 @@
+Массивы
+########################################################################################################################
+МЕТОДЫ МАССИВОВ:
+
+* array.push('elem') - добавление элемента в конец массива
+* array.unshift('elem') - добавление элемента в начало массива
+* array.pop() - удаление последнего элемента из массива
+* array.shift('elem') - удаляет и возвращает первый элемент массива
+* array.indexOf('elem') - возвращает индекс элемента в массива, если он был найден, или -1, если не был (поиск сначала)
+* array.lastindexOf('elem') - возвращает индекс элемента в массива, если он был найден, или -1, если не был (поиск с конца)
+* array.slice('start index', 'end index') - принимает начальный и конечный индексы и возвращает массив,
+содержащий элементы, расположенные между ними, включая начальный, но исключая конечный индекс.
+Если конечный индекс не задан, "slice" вернет все элементы, идущие после начального индекса.
+* array.concat('array1', array2) - склеивает массивы
+
+let journal = [
+  {events: ["work", "touched tree", "pizza",
+            "running", "television"],
+   squirrel: false},
+  {events: ["work", "ice cream", "cauliflower",
+            "lasagna", "touched tree", "brushed teeth"],
+   squirrel: false},
+  {events: ["weekend", "cycling", "break", "peanuts",
+            "beer"],
+   squirrel: true},
+  /* and so on... */
+];
+
+Перебор массива по одному элементу:
+
+# 1) вариант первый:
+for (let i = 0; i < JOURNAL.length; i++) {
+  let entry = JOURNAL[i];
+  // Do something with entry
+}
+
+# 2) вариант первый:
+for (let entry of JOURNAL) {
+  console.log(`${entry.events.length} events.`);
+}
+
+Если цикл for выглядит подобным образом, со словом "of" после определения переменной,
+он будет перебирать все элементы значения, указанного после "of". Это работает не
+только для массивов, но и для строк и для некоторых других структур данных.
+
+function journalEvents(journal) {
+  let events = [];
+  for (let entry of journal) {
+    for (let event of entry.events) {
+      if (!events.includes(event)) {
+        events.push(event);
+      }
+    }
+  }
+  return events;
+}
+
+console.log(journalEvents(JOURNAL));
+// → ["carrot", "exercise", "weekend", "bread", …]
