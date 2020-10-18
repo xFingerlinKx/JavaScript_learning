@@ -1,0 +1,50 @@
+Карты (словари)
+########################################################################################################################
+
+let ages = {
+  Boris: 39,
+  Liang: 22,
+  Júlia: 62
+};
+
+console.log(`Júlia is ${ages["Júlia"]}`);
+// → Júlia is 62
+console.log("Is Jack's age known?", "Jack" in ages);
+// → Is Jack's age known? false
+console.log("Is toString's age known?", "toString" in ages);
+// → Is toString's age known? true
+
+Здесь имена свойств объекта - это имена людей, а значения свойств - их возраст. Но мы определенно не указали в словаре
+никого с именем toString. Тем не менее, поскольку простые объекты являются производными от Object. prototype, похоже,
+что такое свойство есть.
+
+Поэтому использовать простые объекты в качестве словарей опасно. Есть несколько способов избежать подобной проблемы.
+Во-первых, можно создавать объекты без прототипа. Если передать null в Object.create, то полученный объект не будет
+производным от Object.prototype и его можно будет безопасно задействовать в качестве словаря.
+
+console.log("toString" in Object.create(null));
+// → false
+
+В JavaScript есть класс Мар - он хранит отображение и позволяет задействовать любые типы ключей.
+
+let ages = new Map();
+ages.set("Boris", 39);
+ages.set("Liang", 22);
+ages.set("Júlia", 62);
+
+console.log(`Júlia is ${ages.get("Júlia")}`);
+// → Júlia is 62
+console.log("Is Jack's age known?", ages.has("Jack"));
+// → Is Jack's age known? false
+console.log(ages.has("toString"));
+// → false
+
+Методы set, get и has являются частью интерфейса объекта Мар.
+Если у нас все же есть простой объект, который по какой-то причине нужно задействовать как словарь, то будет полезно
+знать, что Object. keys возвращает только собственные ключи объекта, а не ключи из прототипа. В качестве альтернативы
+оператору in можно использовать метод hasDwnProperty, который игнорирует прототип объекта.
+
+console.log({x: 1}.hasOwnProperty("x"));
+// → true
+console.log({x: 1}.hasOwnProperty("toString"));
+// → false
