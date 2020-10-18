@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Проект: Робот</title>
+    <script>
+        /*
+        Сеть дорог в деревне образует граф. Граф - это множество точек (домов в деревне),
+        соединенных линиями (дорогами). Данный граф будет миром, в котором движется наш робот.
+        */
+        const roads = [
+            "Alice's House-Bob's House", "Alice's House-Cabin",
+            "Alice's House-Post Office", "Bob's House-Town Hall",
+            "Daria's House-Ernie's House", "Daria's House-Town Hall",
+            "Ernie's House-Grete's House", "Grete's House-Farm",
+            "Grete's House-Shop", "Marketplace-Farm",
+            "Marketplace-Post Office", "Marketplace-Shop",
+            "Marketplace-Town Hall", "Shop-Town Hall"
+        ];
+
+        /*
+        Работать с массивом строк не очень удобно. Нас интересуют пункты назначения, к которым мы можем добраться из
+        данного места. Преобразуем список дорог в структуру данных, позволяющую узнать, куда можно попасть из каждого места.
+        Функция buildGraph принимает массив ребер и создает для него объект словаря,
+        в котором каждому узлу соответствует массив связанных с ним узлов.
+        Метод split обеспечивает переход от строк, описывающих дороги и имеющих форму "Начало - конец",
+        к двухэлементным массивам, содержащим начало и конец в виде отдельных строк.
+        */
+        function buildGraph(edges) {
+            // создание объекта бех прототипа - если передать null в Object.create,
+            // то полученный объект не будет производным от Object.prototype
+            let graph = Object.create(null);
+
+            function addEdge(from, to) {
+                if (graph[from] == null) {
+                    graph[from] = [to];
+                } else {
+                    graph[from].push(to);
+                }
+            }
+
+            for (let [from, to] of edges.map(r => r.split("-"))) {
+                addEdge(from, to);
+                addEdge(to, from);
+            }
+            return graph;
+        }
+
+        const roadGraph = buildGraph(roads);
+
+        class VillageState {
+            constructor(place, parcels) {
+                this.place = place;
+                this.parcels = parcels;
+            }
+
+            /*
+            Все действия выполняются в методе move. Сначала он проверяет, существует ли дорога из текущего места
+            в пункт назначения, и если нет, то возвращает старое состояние, поскольку это недопустимый ход.
+            Затем метод создает новое состояние с пунктом назначения в качестве нового местоположения робота.
+            Но для этого также необходимо создать новое множество посылок - те посылки, которые несет робот
+            (находящиеся в текущем местоположении робота), необходимо переместить на новое место.
+            Кроме того, посылки, адресованные данному месту, должны быть доставлены - другими словами, удалены из
+            множества недоставленных посылок. Перемещения выполняются посредством вызова map, а доставка - с помощью
+            вызова filter. При перемещениях объекты посылок не изменяются, а создаются заново. Метод move создает
+            новое состояние деревни, при этом не изменяя старое.
+            */
+            move(destination) {
+                if (!roadGraph[this.place].includes(destination)) {
+                    return this;
+                } else {
+                    let parcels = this.parcels.map(p => {
+                        if (p.place != this.place) return p;
+                        return {place: destination, address: p.address};
+                    }).filter(p => p.place != p.address);
+                    return new VillageState(destination, parcels);
+                }
+            }
+        }
+
+        let first = new VillageState("Post Office", [{place: "Post Office", address: "Alice's House"}]);
+        let next = first.move("Alice's House");
+
+        console.log(next.place);
+        // → Alice's House
+        console.log(next.parcels);
+        // → []
+        console.log(first.place);
+        // → Post Office
+        // Результатом перемещения является доставка посылки, и это отражается в следующем состоянии.
+        // Но исходное состояние по-прежнему описывает ситуацию, когда робот находится на почте, а посылка не доставлена.
+
+        function runRobot(state, robot, memory) {
+            for (let turn = 0; ; turn++) {
+                if (state.parcels.length == 0) {
+                    console.log(`Done in ${turn} turns`);
+                    break;
+                }
+                let action = robot(state, memory);
+                state = state.move(action.direction);
+                memory = action.memory;
+                console.log(`Moved to ${action.direction}`);
+            }
+        }
+
+        function randomPick(array) {
+            let choice = Math.floor(Math.random() * array.length);
+            return array[choice];
+        }
+
+        function randomRobot(state) {
+            return {direction: randomPick(roadGraph[state.place])};
+        }
+
+        VillageState.random = function (parcelCount = 5) {
+            let parcels = [];
+            for (let i = 0; i < parcelCount; i++) {
+                let address = randomPick(Object.keys(roadGraph));
+                let place;
+                // Мы не хотим, чтобы посылки были адресованы в то же место, откуда они были отправлены.
+                // По этой причине цикл do продолжает выбирать новые места, если полученное место соответствует адресу посылки.
+                do {
+                    place = randomPick(Object.keys(roadGraph));
+                } while (place == address);
+                parcels.push({place, address});
+            }
+            return new VillageState("Post Office", parcels);
+        };
+
+        runRobot(VillageState.random(), randomRobot);
+        // → Moved to Marketplace
+        // → Moved to Town Hall
+        // → …
+        // → Done in 63 turns
+
+        const mailRoute = [
+            "Alice's House", "Cabin", "Alice's House", "Bob's House",
+            "Town Hall", "Daria's House", "Ernie's House",
+            "Grete's House", "Shop", "Grete's House", "Farm",
+            "Marketplace", "Post Office"
+        ];
+        // Для реализации робота, следующего по маршруту, нам нужно использовать память робота.
+        // Он сохраняет остаток маршрута в своей памяти и на каждом ходу отбрасывает первый элемент.
+        function routeRobot(state, memory) {
+            if (memory.length == 0) {
+                memory = mailRoute;
+            }
+            return {direction: memory[0], memory: memory.slice(1)};
+        }
+
+        /*
+        На самом деле нас больше всего интересует кратчайший маршрут. Поэтому мы вначале будем рассматривать короткие
+        маршруты и только потом перейдем к более длинным. Хорошим подходом было бы "наращивать" маршруты из начальной
+        точки, исследуя каждое достижимое место, которое еще не посещалось, пока маршрут не достигнет цели. Таким образом,
+        мы будем исследовать только потенциально интересные маршруты и найдем кратчайший (или один из кратчайших,
+        если их несколько) путь к цели.
+        */
+        function findRoute(graph, from, to) {
+            let work = [{at: from, route: []}];
+            for (let i = 0; i < work.length; i++) {
+                let {at, route} = work[i];
+                for (let place of graph[at]) {
+                    if (place == to) return route.concat(place);
+                    if (!work.some(w => w.at == place)) {
+                        work.push({at: place, route: route.concat(place)});
+                    }
+                }
+            }
+        }
+
+        /*
+        Наш код не обрабатывает ситуацию, когда в рабочем списке не осталось рабочих элементов, поскольку мы точно знаем,
+        что наш граф является связным, то есть любое местоположение может быть достигнуто из всех остальных мест.
+        Мы всегда сможем найти маршрут между двумя точками, и поиск никогда не потерпит неудачу.
+        */
+        function goalOrientedRobot({place, parcels}, route) {
+            if (route.length == 0) {
+                let parcel = parcels[0];
+                if (parcel.place != place) {
+                    route = findRoute(roadGraph, place, parcel.place);
+                } else {
+                    route = findRoute(roadGraph, place, parcel.address);
+                }
+            }
+            return {direction: route[0], memory: route.slice(1)};
+        };
+
+        runRobotAnimation(VillageState.random(), goalOrientedRobot, []);
+
+    </script>
+</head>
+<body>
+
+</body>
+</html>
